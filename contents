@@ -1,0 +1,21 @@
+* 데이터 타입(구조)
+=====================
+1. 스칼라(0차원)
+  숫자(numeric), 문자(character), boolean, factor, 결측치(NA, NaN, null, Inf)
+
+2. Vector(1차원) : default
+
+3. Matrix(2차원)  - 배열구조
+
+4. DataFrame(2차원)  - 배열구조아님
+
+5. Array(3차원 이상)
+
+6. List(3차원 이상)
+
+여기서 배열은 Vector, Metrix, Array 이렇게 3가지 - 같은 형식끼리 써야함
+
+
+
+* 판별 함수 : is.xx()
+* 변환 함수 : as.xx()
