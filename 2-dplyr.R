@@ -166,5 +166,13 @@ mpg1 %>% mutate(test2=case_when(total < 20 ~ "fail", total >=20 ~ "pass"))
 mpg1$grade <- ifelse(mpg1$total >= 30, "A", ifelse(mpg1$total >= 20, "B", "C"))
 mpg1
 
-mpg1$grade <- case_when(mpg1$total >= 30 ~ "A", mpg1$total >=20 ~ "B", mpg1$total >= 10 ~ "C")
+mpg1$grade <- case_when(
+                    mpg1$total >= 30 ~ "A",
+                    mpg1$total >= 20 ~ "B",
+                    mpg1$total < 20 ~ "C")
 mpg1
+
+
+# midwest 데이터 ( 교재 160 page )
+midwest <- ggplot2::midwest
+str(midwest)
