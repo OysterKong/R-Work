@@ -19,3 +19,45 @@
 
 * 판별 함수 : is.xx()
 * 변환 함수 : as.xx()
+
+
+
+
+
+* dplyr
+============
+1) filter() : 행 추출 -> subset(), sql에서의 where
+2) select() : 열 추출 -> sql에서의 select
+3) arrange() : 정렬 -> order(), sort()
+4) mutate() : 열 추가
+5) summarize() : 통계량 산출
+6) groupby() : 집단별로 나누기
+7) left_join() : 데이터 합치기(열) -> cbind()
+8) bind_rows() : 데이터 합치기(행) -> rbind()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
