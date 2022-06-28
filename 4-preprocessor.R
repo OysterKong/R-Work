@@ -107,18 +107,91 @@ t_survey
 ds2$survey2 <- 6-t_survey
 ds2$survey2
 
+### Dummy : 척도 변경(질적 -> 양적)
+# 거주 유형 : 단독주택(1), 다가구주택(2), 아파트(3), 오피스텔(4)
+# 직업 유형 : 자영업(1), 사무직(2), 서비스(3), 전문직(4), 기타
+
+# 더미데이터에 단독주택은 0001, 다가구주택은 0100, 아파트는 0010, 오피스텔은 0001 처럼 1의 위치로 표기
+# 단독주택과 다가구주택을 합쳐서 0으로 표기, 아파트랑 오피스텔을 합쳐서 1로 표기
+
+ds3 <- read.csv("../data/user_data.csv")
+ds3
+
+table(ds3$house_type)
+
+# house_type2컬럼을 새로 추가해서 단독과 다가구는 0으로, 아파트와 오피스텔은 1로 변환
+ds3$house_type2[ds3$house_type ==1 | ds3$house_type ==2] <- 0
+ds3$house_type2[ds3$house_type ==3 | ds3$house_type ==4] <- 1
+head(ds3)
 
 
+ds3$house_type2 <- ifelse(ds3$house_type==1 | ds3$house_type==2, 0, 1)
+table(ds3$house_type2)
+
+### 데이터 구조 변경(wide type, long type)
+### melt() => long형으로 변경, cast() => wide 형으로 변경
+### reshape, reshape2, tidyr, ...
+install.packages("reshape2")
+library(reshape2)
+
+str(airquality)
+head(airquality)
+
+# wide 형을 long형으로
+m1 <- melt(airquality, id.vars=c("Month", "Day"), variable.name="climate_name", value.name="climate_value")
+View(m1)
+
+# long형을 wide형으로    (데이터, 바꾸지않을 기준컬럼 ~ 바꿀컬럼)
+?dcast
+dcast(m1, Month+Day ~ climate_name)
+
+### 에제1
+df1 <- read.csv("../data/data.csv")
+View(df1)
+
+# 날짜별로 컬럼을 wide하게 변경
+df2 <- dcast(df1, Customer_ID ~ Date)
+
+# 다시 long형으로 변경
+melt(df2, id.vars="Customer_ID", variable.name = "Date", value.name = "Buy")
 
 
+##### 실습 : 극단적 선택의 비율은 어느 연령대가 가장 높은가 ? (사망원인 통계) #####
+### 부제 : 자살 방지를 위한 도움의 손길은 누구에게 ? #####
 
+data <- read.csv("../data/2019_suicide.csv")
+str(data)
 
+man <- data[21:39, c(3, 4, 5)]
+man
 
+woman <- data[40:58, c(4, 5)]
+woman
 
+total <- cbind(man, woman)
 
+names(total) <- c("연령", "남자사망자수", "남자사망률", "여자사망자수", "여자사망률률")
+total
 
+total$age <- 0
+step <- 5
 
+for(i in 1:19){
+  total[i, "age"] <- step
+  step <- step + 5
+}
 
+total
 
+# 20 살 이하는 10, 21~30은 20, 31~40은 30, ...
+total$age2[total$age<=20] <- 10
+total$age2[total$age>20 & total$age<=30] <- 20
+total$age2[total$age>30 & total$age<=40] <- 30
+total$age2[total$age>40 & total$age<=50] <- 40
+total$age2[total$age>50 & total$age<=60] <- 50
+total$age2[total$age>60 & total$age<=70] <- 60
+total$age2[total$age>70 & total$age<=80] <- 70
+total$age2[total$age>80 & total$age<=90] <- 80
+total$age2[total$age>90] <- 90
 
-
+total
