@@ -158,6 +158,8 @@ melt(df2, id.vars="Customer_ID", variable.name = "Date", value.name = "Buy")
 
 ##### 실습 : 극단적 선택의 비율은 어느 연령대가 가장 높은가 ? (사망원인 통계) #####
 ### 부제 : 자살 방지를 위한 도움의 손길은 누구에게 ? #####
+library(dplyr)
+library(ggplot2)
 
 data <- read.csv("../data/2019_suicide.csv")
 str(data)
@@ -195,3 +197,29 @@ total$age2[total$age>80 & total$age<=90] <- 80
 total$age2[total$age>90] <- 90
 
 total
+
+str(total)
+
+# 타입을보니 남자/여자사망률이 chr - 문자타입이므로 비교를 위해 이를 num - 숫자타입으로 바꿔준다.
+
+total$남자사망률 <- as.numeric(total$남자사망률)
+total$여자사망률 <- as.numeric(total$여자사망률)
+str(total)
+
+total$남자사망자수 <- as.integer(total$남자사망자수)
+total$여자사망자수 <- as.integer(total$여자사망자수)
+str(total)
+
+# 남성, 여성 - 연령대 별 자살하는 남성 수
+total_sum <- total %>% group_by(age2) %>% summarize(man_sum=sum(남자사망자수), woman_sum=sum(여자사망자수))
+
+total_sum
+
+ggplot(total_sum, aes(age2, man_sum)) + geom_col()                #남성 그래프
+ggplot(total_sum, aes(age2, woman_sum)) + geom_col()              #여성 그래프
+
+
+total %>% group_by(age2) %>% summarise(sd_man=sd(남자사망률), sd_woman=sd(여자사망률))         #sd() 는 표준편차 함수수
+
+
+

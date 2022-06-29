@@ -1,0 +1,195 @@
+---
+title: "Welfare Report"
+author: "홍길동"
+date: '2022-06-29'
+output: html_document
+---
+
+---
+
+## 1. Data Prepare
++ 출처 : https://www.koweps.re.kr:442
+
+### 1-1. 패키지 준비
+```{r}
+# install.packages("foreign")
+# install.packages("readxl")
+```
+
+
+```{r}
+library(foreign)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+```
+
+
+### 1-2. 데이터 불러오기
+```{r}
+raw_welfare <- read.spss("../data/Koweps_hpc10_2015_beta1.sav", to.data.frame = T)
+```
+
+
+
+```{r}
+# 복사본 만들기
+welfare <- raw_welfare
+```
+
+
+### 1-3. 데이터 검토하기
+```{r}
+dim(welfare)
+```
+
+### 1-4. 특성 선택
+```{r}
+welfare <- rename(welfare, sex=h10_g3, birth=h10_g4, marriage=h10_g10,
+                  religion=h10_g11, income=p1002_8aq1, code_job=h10_eco9,
+                  code_region=h10_reg7)
+```
+
+```{r}
+welfare <- welfare[, c("sex", "birth", "marriage", "religion", "income", "code_job", "code_region")]
+```
+
+```{r}
+str(welfare)
+```
+
+---
+
+## 2. EDA
+
+### 2-1. 성별에 따른 월급 차이?
+
+```{r}
+# 성별 변수 검토
+table(welfare$sex)
+```
+
+```{r}
+# 월급 변수 검토
+summary(welfare$income)
+```
+
+```{r}
+qplot(welfare$income)
+```
+
+```{r}
+qplot(welfare$income) + xlim(0, 1000)
+```
+
+
+### 2-1-1. 전처리
+
+```{r}
+# 성별 항목에 대한 이름 변경
+
+welfare$sex <- ifelse(welfare$sex == 1, "male", "female")
+table(welfare$sex)
+```
+
+```{r}
+# 성별 변수에 대한 전처리 : 이상치, 결측치
+
+welfare$sex <- ifelse(welfare$sex == 9, NA, welfare$sex)
+table(is.na(welfare$sex))
+```
+
+```{r}
+# 월급 변수에 대한 전처리 : 이상치, 결측치
+
+welfare$income <- ifelse(welfare$income %in% c(0, 9999), NA, welfare$income )
+table(is.na(welfare$income))
+```
+
+### 2-1-2. 결론
+
+```{r}
+sex_income <- welfare %>% filter(!is.na(income)) %>% group_by(sex) %>% summarise(mean_income = mean(income))
+
+sex_income
+```
+
+```{r}
+ggplot(sex_income, aes(sex, mean_income)) + geom_col()
+```
+
+### 2-2. 나이와 월급의 관계 ?
+# 몇 살 때 월급을 가장 많이 받을까 ?
+
+```{r}
+# 변수 검토
+
+str(welfare)
+```
+
+```{r}
+#이상치 확인
+summary(welfare$birth)
+
+#결측치 확인
+table(is.na(welfare$birth))
+```
+
+```{r}
+# 이상치, 결측치 처리 ( 없으나 최종확인 )
+welfare$birth <- ifelse(welfare$birth == 9999, NA, welfare$birth)
+table(is.na(welfare$birth))
+```
+
+```{r}
+# 변수 만들기 ( 조사년도 - 태어난해 + 1 = 나이 )
+welfare$age <- 2015 - welfare$birth + 1
+summary(welfare$age)
+
+```
+
+```{r}
+# 나이와 월급의 관계 분석위해 나이에 따른 월급 평균표 작성
+age_income <- welfare %>% filter(!is.na(income)) %>% group_by(age) %>% summarise(mean_income = mean(income))
+
+age_income
+```
+
+```{r}
+ggplot(age_income, aes(age, mean_income)) + geom_line()
+
+#사회 초년생일 때 100만원이 조금 넘는 급여에서 시작해서 40세까지 지속적으로 증가, 이후 약간의 증감소를 겪다 50대 초에
+# 가장 많은 월급인 300만원 초반대의 급여를 받고 이후 감소하기 시작해서 70대 초반부터는 20대 사회 초년생보다 낮은 임금을 받는다.
+```
+
+### 2-3. 연령대에 따른 월급 차이 ?
+# 어떤 연령대의 월급이 가장 많을까 ?
+
+```{r}
+# 30살 미만은 젊은이(young), 30세부터 59세까지는 중년(middle),  60세 이상은 노년(old) 로 정의
+
+welfare <- welfare %>% mutate(age_group = ifelse(age < 30, "young", ifelse(age <= 59, "middle", "old")))
+
+table(welfare$age_group)
+```
+
+```{r}
+qplot(welfare$age_group)
+```
+
+```{r}
+# 연령대에 따른 월급 차이 분석하기
+# 연령대별 월급 평균표 작성
+
+age_group_income <- welfare %>% filter(!is.na(income)) %>% group_by(age_group) %>% summarise(mean_income = mean(income))
+
+age_group_income
+```
+
+```{r}
+ggplot(age_group_income, aes(age_group, mean_income)) + geom_col() + scale_x_discrete(limits=c("young", "middle", "old"))
+
+# 결과에 따르면 30세~59세의 연령대인 중년층에서 평균 200만원 중후반의 급여로 가장 높으며 30살 미만인 젊은층에서 약 160만원정도,
+# 60세 이상 노년층은 평균 120만원정도로 가장 낮았다.
+```
+
