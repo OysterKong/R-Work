@@ -2,7 +2,9 @@
 title: "Welfare Report"
 author: "홍길동"
 date: '2022-06-29'
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ---
@@ -118,8 +120,8 @@ sex_income
 ggplot(sex_income, aes(sex, mean_income)) + geom_col()
 ```
 
-### 2-2. 나이와 월급의 관계 ?
-# 몇 살 때 월급을 가장 많이 받을까 ?
+# 2-2. 나이와 월급의 관계 ?
+### 몇 살 때 월급을 가장 많이 받을까 ?
 
 ```{r}
 # 변수 검토
@@ -162,8 +164,8 @@ ggplot(age_income, aes(age, mean_income)) + geom_line()
 # 가장 많은 월급인 300만원 초반대의 급여를 받고 이후 감소하기 시작해서 70대 초반부터는 20대 사회 초년생보다 낮은 임금을 받는다.
 ```
 
-### 2-3. 연령대에 따른 월급 차이 ?
-# 어떤 연령대의 월급이 가장 많을까 ?
+# 2-3. 연령대에 따른 월급 차이 ?
+### 어떤 연령대의 월급이 가장 많을까 ?
 
 ```{r}
 # 30살 미만은 젊은이(young), 30세부터 59세까지는 중년(middle),  60세 이상은 노년(old) 로 정의
@@ -191,5 +193,360 @@ ggplot(age_group_income, aes(age_group, mean_income)) + geom_col() + scale_x_dis
 
 # 결과에 따르면 30세~59세의 연령대인 중년층에서 평균 200만원 중후반의 급여로 가장 높으며 30살 미만인 젊은층에서 약 160만원정도,
 # 60세 이상 노년층은 평균 120만원정도로 가장 낮았다.
+```
+
+# 2-4. 연령대 및 성별 월급 차이 ?
+### 성별 월급 차이는 연령대별로 다를까 ?
+
+```{r}
+sex_income <- welfare %>% filter(!is.na(income)) %>% group_by(age_group, sex) %>% summarise(mean_income = mean(income))
+
+sex_income
+```
+
+```{r}
+ggplot(sex_income, aes(x=age_group, y=mean_income, fill=sex)) + geom_col(position="dodge") + scale_x_discrete(limits=c("young", "middle", "old"))
+
+# 30살 이전에는 성별에 따른 급여차이는 거의 없으나 중년에서 2배를 넘어선 격차로 벌어지고 노년에서는 남녀모두 급여가 큰 폭으로
+# 감소하나 차이는 여전히 있음을 알 수 있다.
+```
+
+```{r}
+# 나이 및 성별 월급 평균표 만들어 그래프로 표현하기
+
+sex_age <- welfare %>% filter(!is.na(income)) %>% group_by(age, sex) %>% summarise(mean_income = mean(income))
+
+head(sex_age)
+```
+
+```{r}
+ggplot(sex_age, aes(age, mean_income, col =sex)) + geom_line()
+
+# 30살 이전에는 남녀모두 비슷한 급여수준이나 30살 이후부터 남성은 우상향, 여성은 우하향을 그리며 격차가 벌어지고
+# 이는 50대 초반에 가장 크게 벌어진다. 남성도 50세 초반부터 우하향하기 시작하여 노년인 75세 이후부터는 남녀 모두
+# 비슷한 급여수준을 보인다.
+# 아무래도 여성의 경우 대부분 겪게되는 출산 및 육아로 인해 30대 이후 경력단절에 노출되어 있으며 이는 인생주기에 있어
+# 소득이 점진적으로 줄어들 수 밖에 없는 구조를 보여준다. 
+```
+# 2-5. 직업별 월급 차이 ?
+### 어떤 직업이 월급을 가장 많이 받을까 ?
+
+```{r}
+# 직업변수 살펴보기
+
+str(welfare)
+
+table(welfare$code_job)
+```
+
+```{r}
+library(readxl)
+list_job <- read_excel("../data/Koweps_Codebook.xlsx", col_names=T, sheet=2)
+
+head(list_job)
+```
+
+```{r}
+dim(list_job)    # 149개 직업 - 2개의 변수
+```
+```{r}
+# 코드와 직업명 결합
+
+welfare <- left_join(welfare, list_job, by="code_job")
+
+welfare %>% filter(!is.na(code_job)) %>% select(code_job, job) %>% head(10)
+```
+
+```{r}
+# 직업별 월급 차이 분석
+## 직업별 월급 평균표
+
+job_income <- welfare %>% filter(!is.na(job) & !is.na(income)) %>% group_by(job) %>% summarise(mean_income = mean(income))
+
+head(job_income)
+
+```
+
+```{r}
+# 직업별 월급 순위 (내림차순)
+
+top10 <- job_income %>% arrange(desc(mean_income)) %>% head(10)
+
+top10
+```
+
+```{r}
+ggplot(top10, aes(reorder(job, mean_income), mean_income)) + geom_col() + coord_flip()
+
+# 생성된 표와 같이 금속재료 공학관련 기술자 및 시험원이 가장 급여가 많고 이와 비슷하게 의료진료 전문가가 2순위,
+# 상위 10개 직업중 석유 및 화학물 가공장치 조작원이 10위임을 알 수 있다.
+```
+```{r}
+# 하위 10개 직업 알아보기
+
+bottom10 <- job_income %>% arrange(mean_income) %>% head(10)
+bottom10
+```
+
+```{r}
+ggplot(bottom10, aes(reorder(job, -mean_income), mean_income)) + geom_col() + coord_flip() + ylim(0, 850)
+
+# 직업 중 월 80만원으로 가사 및 육아 도우미가 제일 적게버는 직업이며 상위 1~2위 직업과는 10배가 넘는 소득격차를
+# 보이고 있습니다.
+# 여기서 상위 소득 직업들에는  직책이 높거나 기술직들이 주로 분포하고 있으며 하위 소득 직업들에는 주로 몸을 사용
+# 하는 단순노무의 직업들이 대부분 차지하고 있으므로 학력(전문직 선택 및 승진가능성 증가) 이 소득에 영향을 준다는
+# 결론도 도출해볼 수 있다.
+```
+
+# 2-6. 성별 직업 빈도 
+### 성별로 어떤 직업이 가장 많을까 ?
+
+```{r}
+# 남성 직업 빈도 상위 10개 추출
+
+job_male <- welfare %>% filter(!is.na(job) & sex == "male") %>% group_by(job) %>% summarise(n =n()) %>%
+  arrange(desc(n)) %>% head(10)
+
+job_male
+```
+
+```{r}
+# 여성 직업 빈도 상위 10개 추출
+
+job_female <- welfare %>% filter(!is.na(job) & sex == "female") %>% group_by(job) %>% summarise(n =n()) %>%
+  arrange(desc(n)) %>% head(10)
+
+job_female
+```
+
+```{r}
+# 그래프화 (남성 직업 빈도 상위 10개)
+
+ggplot(job_male, aes(reorder(job, n), n)) + geom_col() + coord_flip()
+
+# 남성들이 가장 많이 종사하는 직업 1,2,3 순위가 작물재배종사자, 자동차운전원, 경영관련 사무원 인 것을 알 수 있다.
+```
+
+```{r}
+# 그래프화 (여성 직업 빈도 상위 10개)
+
+ggplot(job_female, aes(reorder(job, n), n)) + geom_col() + coord_flip()
+
+# 여성들이 가장 많이 종사하는 직업 1,2,3 순위가 작물재배종사자, 청소 및 환경미화원, 매장판매 종사자인 것을 알 수 있다.
+```
+
+# 2-7. 종교 유무에 따른 이혼율
+### 종교가 있는 사람들이 이혼을 덜 할까 ?
+
+```{r}
+# 변수 검토 (종교, 혼인상태)
+
+str(welfare)
+
+table(welfare$religion)
+
+# 종교가 있는 사람 8047명, 없는 사람 8617명
+```
+
+```{r}
+welfare$religion <- ifelse(welfare$religion == 1, "yes", "no")
+
+table(welfare$religion)
+```
+
+```{r}
+qplot(welfare$religion)
+```
+
+```{r}
+# 변수검토 (혼인상태)
+
+str(welfare)
+
+table(welfare$marriage)
+```
+
+```{r}
+# 이혼 여부 변수 만들기 (결혼 및 이혼 외에는 전부 결측치)
+
+welfare$group_marriage <- ifelse(welfare$marriage == 1, "marriage",
+                                 ifelse(welfare$marriage == 3, "divorce", NA))
+
+table(welfare$group_marriage)
+```
+```{r}
+# 결혼 또는 이혼에 해당되는 인원 9143명,  그외 해당없는 결측치 7521명
+
+table(is.na(welfare$group_marriage))
+
+```
+```{r}
+qplot(welfare$group_marriage)
+```
+
+```{r}
+# 종교 유무에 따른 이혼율 분석하기
+
+religion_marriage <- welfare %>% filter(!is.na(group_marriage)) %>% group_by(religion, group_marriage) %>%
+  summarise(n = n()) %>% mutate(tot_group = sum(n)) %>% mutate(pct = round(n/tot_group*100), 1)
+
+religion_marriage
+
+# 종교가 있고 결혼한 이는 4213명 , 종교가 있고 이혼한 이는 328명
+# 종교가 없고 결혼한 이는 4218명 , 종교가 없고 이혼한 이는 384명
+```
+```{r}
+#이혼율
+divorce <- religion_marriage %>% filter(group_marriage == "divorce") %>% select(religion, pct)
+
+divorce
+
+```
+
+```{r}
+# 이혼율을 표로 만들기
+
+ggplot(divorce, aes(religion, pct)) + geom_col()
+
+# 종교가 있는 경우 이혼율은 7.2 %  , 종교가 없는 경우 8.3 %
+```
+```{r}
+# 종교 유무에 따른 이혼율을 연령대별로 알아보기
+## 연령대별 이혼율
+
+age_group_marriage <- welfare %>% filter(!is.na(group_marriage)) %>% group_by(age_group, group_marriage) %>%
+  summarise(n = n()) %>% mutate(tot_group = sum(n)) %>% mutate(pct = round(n/tot_group*100, 1))
+
+age_group_marriage
+```
+
+```{r}
+# 이혼율이 적은 젊은 층은 제외 후 그래프
+
+age_group_divorce <- age_group_marriage %>% filter(age_group != "young" & group_marriage == "divorce") %>%
+  select(age_group, pct)
+
+age_group_divorce
+
+ggplot(age_group_divorce, aes(age_group, pct)) + geom_col()
+
+# 노년보다 중년들의 이혼율이 더 높은 것을 확인할 수 있다.
+```
+
+```{r}
+# 연령대 및 종교 유무에 따른 이혼율 표 만들기
+## 연령대, 종교 유무, 결혼 상태별 비율표 만들기
+
+age_group_religion_marriage <- welfare %>% filter(!is.na(group_marriage) & age_group != "young") %>%
+  group_by(age_group, religion, group_marriage) %>% summarise(n = n()) %>%
+  mutate(tot_group = sum(n)) %>% mutate(pct = round(n/tot_group*100, 1))
+
+age_group_religion_marriage
+```
+```{r}
+# 연령대 및 종교 유무별 이혼율 표 만들기
+
+df_divorce <- age_group_religion_marriage %>% filter(group_marriage == "divorce") %>%
+  select(age_group, religion, pct)
+
+df_divorce
+```
+
+```{r}
+# 연령대 및 종교 유무에 따른 이혼율을 그래프로 표현
+
+ggplot(df_divorce, aes(age_group, pct, fill=religion)) + geom_col(position = "dodge")
+
+# 표에 따르면 중년에는 종교가 없는 사람들의 이혼율이 높고 노년에는 비슷하나 종교가 있는 사람들의 이혼율이
+# 약간 더 높은 것을 알 수 있다. 다만 노년의 수치비교는 거의 동일하여 의미가 없는듯하고 중년에서도 차이는 보이나
+# 종교가 안정적인 결혼생활에 직접적인 영향을 미치는지는 확인하기 어렵다.
+```
+# 2-8. 지역별 연령대 비율
+### 노년층이 많은 지역은 어디일까 ?
+
+```{r}
+# 변수 검토
+
+class(welfare$code_region)
+
+table(welfare$code_region)
+```
+```{r}
+# 전처리
+
+# 1 : 서울 , 2 : 수도권 , 3 : 부산/경남/울산 , 4 : 대구/경북 , 5 : 대전/충남 , 6 : 강원/충북 , 7 : 광주/전남/전북/제주도
+
+# 지역 코드 목록 생성
+list_region <- data.frame(code_region = c(1:7), region = c("서울", "수도권(인천/경기)", "부산/경남/울산", "대구/경북", "대전/충남", "강원/충북", "광주/전남/전북/제주도"))
+
+list_region
+```
+```{r}
+# 지역명 변수 추가
+
+welfare <- left_join(welfare, list_region, by="code_region")
+
+welfare %>% select(code_region, region) %>% head
+```
+
+```{r}
+# 지역별 연령대 비율표 만들기
+
+region_age_group <- welfare %>% group_by(region, age_group) %>% summarise(n = n()) %>%
+  mutate(tot_group = sum(n)) %>% mutate(pct = round(n/tot_group*100, 2))
+
+head(region_age_group)
+```
+
+```{r}
+# 지역별 연령대 비율표 그래프 
+
+ggplot(region_age_group, aes(region, pct, fill=age_group)) + geom_col() + coord_flip()
+```
+
+```{r}
+# 노년층 비율 높은 순으로 막대 정렬하기
+## 노년층 비율 높은 순으로 막대 정렬
+
+list_order_old <- region_age_group %>% filter(age_group == "old") %>% arrange(pct)
+
+list_order_old
+
+```
+
+```{r}
+# 지역별 순서 변수 만들기 (order는 지역명을 노년층 비율순으로 정렬한 변수수)
+order <- list_order_old$region
+
+order
+```
+
+```{r}
+# 지역별 노년층 비율을 그래프로 표현
+
+ggplot(region_age_group, aes(region, pct, fill=age_group)) + geom_col() + coord_flip() + scale_x_discrete(limits = order)
+```
+```{r}
+# 연령대 순으로 막대 색깔 나열하기
+
+class(region_age_group$age_group)
+
+levels(region_age_group$age_group)
+```
+```{r}
+region_age_group$age_group <- factor(region_age_group$age_group, level = c("old", "middle", "young"))
+
+class(region_age_group$age_group)
+
+levels(region_age_group$age_group)
+```
+```{r}
+ggplot(region_age_group, aes(region, pct, fill=age_group)) + geom_col() + coord_flip() + scale_x_discrete(limits = order)
+
+# 도출된 표를 보면 젊은층 비율이 높은 곳은 수도권, 인천/경기, 대전/충남이 높고 노년층 비율이 높은 곳은 대구/경북,
+# 강원/충북, 광주/전남/전북/제주도, 부산/경남/울산 등 수도권으로부터 떨어진 지역들이 대부분 차지함을 알 수 있다.
+# 흔히 말하는 시골에 젊은 층들이 사라지고 노년층의 인구만 늘어가고 있다는 말을 어느정도 보여주는 수치이며 또 
+# 직/간접적으로 경제에 영향을 미치는 중년층의 인구 또한 수도권 비율이 높아 시간에 따른 변화를 추가적으로 보여줄 수
+# 있으면 지방경제활성화 안건에 대한 근거자료로 활용할 수 있는 가능성도 보인다.
 ```
 

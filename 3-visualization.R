@@ -127,7 +127,7 @@ stars(mtcars[1:4], key.loc=c(13, 2.0), flip.labels=T, draw.segments=T )
 library(ggplot2)
 library(dplyr)
 
-### 산포도
+### 산포도 : geom_point()
 head(mpg)
 
 # aes(x축, y축)
