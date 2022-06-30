@@ -1,0 +1,46 @@
+*. 가설 검정 : p-value가 0.05보다 큰지 작은지에 대한 검정
+(1) 귀무 가설
+  - 0.05보다 크다
+  - 차이가 없음을 의미(우연히 발생)
+  - 0가설, null
+  
+(2) 대립 가설
+  - 0.05보다 작다
+  - 차이가 있음을 의미
+  - 연구 가설
+  
+(3) 단측검정과 양측검정
+
+
+1. 통계분석 방법
+=====================
+(1) 평균차이 검정
+  - 집단간의 평균 차이
+  - t-test, anova
+  - 데이터 유형 : 명목변수 -> 연속변수
+  
+  
+  1) t-test (student t-test)
+    - 두 집단간의 평균 차이
+      a) 하나의 집단으로 검정 : one sample t-test
+      b) 두개의 집단으로 검정 : independent two sample t-test (default)
+      c) 하나의 집단을 시간의 차이로 두번 검정 : paired sample t-test
+      
+      - 조건
+        a) 결과값이 연속변수
+            아닐 경우 : Mann-Whitney U test, Whilcoxen rank sum test, Mann-Whitney Wilcoxen test(MWW)
+        b) 정규 분포
+            아닐 경우 : Mann-Whitney Wilcoxen test(MWW)
+        c) 등분산
+            아닐 경우 : Welch's t-test
+  
+  2) anova
+    - 세 집단 이상의 평균 차이
+
+
+
+
+
+
+
+(2) 관계 검정
