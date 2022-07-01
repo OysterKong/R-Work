@@ -379,10 +379,14 @@ mydata <- gather(mat, key="GROUP", value="RESULT", "G1", "G3")    # G1 과 G3를
 View(mydata)
 
 t.test(mydata$RESULT ~ mydata$GROUP, data=mydata, paired=T)   # p-value = 0.0004291 로 차이가 있다.
+t.test(mat$G1, mat$G3, paired=T)  # 바로 위 코드랑 동일
 
-# 정규분포가 아니니
+# 정규분포가 아니므로
 wilcox.test(mydata$RESULT ~ mydata$GROUP, data=mydata, paired=T)   # p-value = 0.3153 로 차이가 없다.
 
 
 
+# 단측 검정
+# 가설 : 첫번째 시험이 세번째 시험보다 더 좋을 것이다. (G1 > G3)
+t.test(mydata$RESULT ~ mydata$GROUP, data=mydata, paired=T, alt="greater")   # p-value = 0.0002145
 
