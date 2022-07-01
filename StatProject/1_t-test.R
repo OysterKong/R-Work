@@ -113,7 +113,7 @@ t.test(extra ~ group, data=sleep2, alt="two.sided", var.equal=T, paired=F)
 #귀무 가설 : 수면시간의 증가량 차이가 없다 - 채택
 
 
-### 그래프
+### 그래프(시각화)
 before <- subset(sleep, group==1, extra)
 before
 
@@ -216,3 +216,173 @@ with(mtcars, shapiro.test(mpg[am == 1]))  # 정규분포
 var.test(mpg ~ am, data=mtcars)  # p-value = 0.06691 로 0.05보다 크므로 등분산이다.
 
 t.test(mpg ~ am, data=mtcars, alt="two.sided", var.equal=T)  # p-value = 0.000285 로 차이가 있다. (대립가설채택)
+
+
+
+
+##### 실습 3 #####
+### 주제 : 쥐의 몸무게가 전과 후의 차이가 있는지 알고 싶다.
+## 귀무 가설 : 차이가 없다.
+## 대립 가설 : 차이가 있다.
+
+mydata <- read.csv("../data/pairedData.csv")
+mydata
+
+# wide 형을 long형으로 변환 (종속변수와 독립변수를 구분하기위해 데이터 가공)
+library(reshape2)
+data1 <- melt(mydata, id=("ID"), variable.name = "GROUP", value.name = "RESULT")
+data1
+
+install.packages("tidyr")
+library(tidyr)
+
+?gather
+data2 <- gather(mydata, key="GROUP", value="RESULT", -ID)     # ID까지 같이 합쳐지므로 -ID를 통해 빼내기기
+data2
+
+# 전과 후의 몸무게 평균을 알아보기
+before.mean = with(mydata, mean(before))
+after.mean = with(mydata, mean(After))
+cat(before.mean, after.mean)
+
+# 정규분포 여부
+#귀무 가설 : 정규분포와 같다.
+#대립 가설 : 정규분포와 다르다.
+shapiro.test(mydata$before)
+shapiro.test(data1$RESULT[data1$GROUP=="before"])   # 정규분포와 같다
+shapiro.test(data1$RESULT[data1$GROUP=="After"])    # 정규분포와 같다
+
+
+# 등분산 여부
+# 귀무 가설 : 두 집단은 등분산이다.
+# 대립 가설 : 두 집단은 등분산이 아니다.
+var.test(RESULT ~ GROUP, data=data1)     # 등분산이다
+
+# 최종결론
+t.test(RESULT ~ GROUP, data=data1, alt="two.sided", var.equal=T, paired=T)   # 대립가설 채택 - 차이가 있다
+t.test(mydata$before, mydata$After, paired=T)
+
+# 시각화 - 그래프
+before <- subset(data1, GROUP=="before", RESULT)   # before , After 를 분리해서 담기기
+before
+
+after <- subset(data1, GROUP=="After", RESULT)
+after
+
+g_data <- paired(before, after)     # 분리한 before, After 데이터를 합치기기
+g_data
+
+plot(g_data, type="profile") + theme_bw()
+
+moonBook::densityplot(RESULT ~ GROUP, data=data1)
+
+
+
+##### 실습4 #####
+### 주제 : 시 별로 2010년도와 2015년도의 출산율의 차이가 있나 ?
+
+mydata <- read.csv("../data/paired.csv")
+mydata
+
+# gather 를 사용해서 wide를 long형으로 바꾸기
+mydata1 <- gather(mydata, key="GROUP", value="RESULT", -c(ID, cities))
+mydata1
+
+# melt 를 사용해서 wide를 long형으로 바꾸기
+mydata2 <- melt(mydata, id.vars=c(1, 4), variable.name = "GROUP", value.name = "RESULT")
+
+# 정규분포
+with(mydata1, shapiro.test(RESULT[GROUP=="birth_rate_2010"]))  # 정규분포가 아니다
+with(mydata1, shapiro.test(RESULT[GROUP=="birth_rate_2015"]))  # 정규분포가 아니다다
+
+# 등분산
+wilcox.test(RESULT ~ GROUP, data=mydata1, paired=T)  # 등분산이 아니다
+
+# 최종결론
+t.test(RESULT ~ GROUP, data=mydata1, paired=T)  # 차이가 없다. 대립가설
+
+
+
+
+
+##### 실습5 #####
+### https://www.kaggle.com/kappernielsen/independent-t-test-example
+### 주제1 : 남녀별로 각 시험에 대해 평균차이가 나는지 알고 싶다.
+### 주제2 : 같은 사람에 대해서 성적의 차이가 있는지 알고 싶다. (paired t.test)
+###     -첫번째 시험(g1)과 세번째 시험(g3)를 사용
+
+
+mat <- read.csv("../data/student-mat.csv")
+mat
+
+#첫번째 시험인 G1의 평균 살펴보기
+summary(mat$G1)
+#두번째 시험인 G2의 평균 살펴보기
+summary(mat$G2)
+#세번째 시험인 G3의 평균 살펴보기
+summary(mat$G3)
+
+# 성별에 따른 인원수(빈도수)는 어떤가
+table(mat$sex)   # 남자 208 , 여자 187
+
+
+### 남녀별로 세번의 시험 평균을 비교해보자.
+library(dplyr)
+# 내가 원하는 데이터만 가져오기 - 성별과 각 시험점수의 평균   
+# (여기서 cnt_grade...부분은 시험본 인원,  sd+g1=sd(G1) 부분은 표준편차 )
+mat %>% select(sex, G1, G2, G3) %>% group_by(sex) %>%
+  summarise(mean_g1=mean(G1), mean_g2=mean(G2), mean_g3=mean(G3), cnt_grade=n(),
+                                                                sd_g1=sd(G1), sd_g2=sd(G2), sd_g3=sd(G3))
+
+
+# 정규분포 - shapiro.test
+shapiro.test(mat$G1[mat$sex=="M"])   # 정규분포가 아님
+shapiro.test(mat$G1[mat$sex=="F"])   # 정규분포가 아님
+
+shapiro.test(mat$G2[mat$sex=="M"])   # 정규분포가 아님
+shapiro.test(mat$G2[mat$sex=="F"])   # 정규분포가 아님
+
+shapiro.test(mat$G3[mat$sex=="M"])   # 정규분포가 아님
+shapiro.test(mat$G3[mat$sex=="F"])   # 정규분포가 아님
+
+# 등분산
+var.test(G1 ~ sex, data=mat)   # 등분산이 맞다
+var.test(G2 ~ sex, data=mat)   # 등분산이 맞다
+var.test(G3 ~ sex, data=mat)   # 등분산이 맞다
+
+# 최종결론
+t.test(G1 ~ sex, data=mat, var.equal=T)   # p-value = 0.06825 으로 차이가 없다.
+t.test(G2 ~ sex, data=mat, var.equal=T)   # p-value = 0.07051 으로 차이가 없다.
+t.test(G3 ~ sex, data=mat, var.equal=T)   # p-value = 0.03987 으로 차이가 있다.
+
+
+# wilcox test 확인해보기
+wilcox.test(G1 ~ sex, data=mat)   # 차이가 없다.
+wilcox.test(G2 ~ sex, data=mat)   # 차이가 있다.
+wilcox.test(G3 ~ sex, data=mat)   # 차이가 있다.
+
+# 단측 검정
+t.test(G1 ~ sex, data=mat, var.equal=T, alt="greater")   # 여학생이 남학생보다 잘했는지 비교 - 0.9로 의미없는 수치
+t.test(G2 ~ sex, data=mat, var.equal=T, alt="greater")   # 여학생이 남학생보다 잘했는지 비교 - 0.9로 의미없는 수치
+t.test(G3 ~ sex, data=mat, var.equal=T, alt="greater")   # 여학생이 남학생보다 잘했는지 비교 - 0.9로 의미없는 수치
+
+t.test(G1 ~ sex, data=mat, var.equal=T, alt="less")   # 근소한 차이지만 남학생이 더 잘했다 - 0.03
+t.test(G2 ~ sex, data=mat, var.equal=T, alt="less")   # 근소한 차이지만 남학생이 더 잘했다 - 0.03
+t.test(G3 ~ sex, data=mat, var.equal=T, alt="less")   #  남학생이 더 잘했다 - 0.01
+
+
+### 같은 학생 입장에서 G1과 G3에 대해 변화가 있었는지 확인
+
+mat %>% select(G1, G3) %>% summarise(mean_g1=mean(G1), mean_g3=mean(G3))
+
+mydata <- gather(mat, key="GROUP", value="RESULT", "G1", "G3")    # G1 과 G3를 합치기기
+View(mydata)
+
+t.test(mydata$RESULT ~ mydata$GROUP, data=mydata, paired=T)   # p-value = 0.0004291 로 차이가 있다.
+
+# 정규분포가 아니니
+wilcox.test(mydata$RESULT ~ mydata$GROUP, data=mydata, paired=T)   # p-value = 0.3153 로 차이가 없다.
+
+
+
+
