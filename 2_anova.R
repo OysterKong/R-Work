@@ -202,6 +202,87 @@ TukeyHSD(out)
 ### 원인 변수 : PaymentMethod, Contract
 
 telco <- read.csv("../data/Telco-Customer-Churn.csv")
+View(telco)
 
-out <- aov(birth_rate ~ ad_layer + multichild + ad_layer:multichild, data=mydata)
+out0 <- aov(TotalCharges ~ PaymentMethod + Contract + PaymentMethod:Contract, data=telco)
+shapiro.test(resid(out0))
+
+
+
+####################################################################################################################
+
+##### RM ANOVA #####
+### 구형성(Sphericity) : 이미 독립성이 깨졌으므로 최대한 독립성과 무작위성을 확보하기 위한 조건을 의미
+### 가정 : 반복 측정된 자료들의 시차에 따른 분산이 동일
+###       1) Mouchly의 단위행렬 검정 : p-value 값이 0.05보다 커야 한다.
+###       2) 만약 0.05보다 작다면 Greenhouse를 사용한다. : 값이 1에 가까울수록 구형성 타당
+
+
+
+
+# id pre three_month six_month
+# 1  1  45          50        55
+# 2  2  42          42        45
+# 3  3  36          41        43
+# 4  4  39          35        40
+# 5  5  51          55        59
+# 6  6  44          49        56
+
+
+df = data.frame()
+df = edit(df)
+df
+
+means <- c(mean(df$pre), mean(df$three_month), mean(df$six_month))
+means
+
+plot(means, type="o", lty=2, col="red")
+
+
+### 사후 검정
+library(reshape2)
+rmlong <- melt(df, id.vars="id")
+rmlong
+
+pairwise.t.test(rmlong$value, rmlong$variable, paired = T, p.adjust.method = "bonferroni")
+
+
+##### 실습1 #####
+### 주제 : 7명의 학생이 총 4번의 시험을 보았다. 평균 차이가 있는가 ?
+### 있다면 어디에서 차이가 있는가 ?
+mydata <- read.csv("../data/onewaysample.csv")
+View(mydata)
+
+
+
+
+
+# 또는
+out <- aov(value ~ variable, data=rmlong)
 shapiro.test(resid(out))
+
+TukeyHSD(out)
+
+
+
+install.packages("car")
+library(car)
+
+multimodel <- lm(cbind(df$pre, df$three_month, df$six_month) ~ 1)
+multimodel
+
+trials <- factor(c("pre", "three_month", "six_month"))
+trials
+
+?Anova
+model1 <- Anova(multimodel, idata=data.frame(trials), idesign=~trials, type="III")
+summary(model1, multivariate=F)
+
+
+
+
+
+
+
+
+
