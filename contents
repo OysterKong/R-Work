@@ -1,97 +1,128 @@
-* 데이터 타입(구조)
+*. 가설 검정 : p-value가 0.05보다 큰지 작은지에 대한 검정
+(1) 귀무 가설
+  - 0.05보다 크다
+  - 차이가 없음을 의미(우연히 발생)
+  - 0가설, null
+  
+(2) 대립 가설
+  - 0.05보다 작다
+  - 차이가 있음을 의미
+  - 연구 가설
+  
+(3) 단측검정과 양측검정
+
+
+1. 통계분석 방법
 =====================
-1. 스칼라(0차원)
-  숫자(numeric), 문자(character), boolean, factor, 결측치(NA, NaN, null, Inf)
-
-2. Vector(1차원) : default
-
-3. Matrix(2차원)  - 배열구조
-
-4. DataFrame(2차원)  - 배열구조아님
-
-5. Array(3차원 이상)
-
-6. List(3차원 이상)
-
-여기서 배열은 Vector, Metrix, Array 이렇게 3가지 - 같은 형식끼리 써야함
-
-
-
-* 판별 함수 : is.xx()
-* 변환 함수 : as.xx()
-
-
-
-
-
-* dplyr
-============
-1) filter() : 행 추출 -> subset(), sql에서의 where
-2) select() : 열 추출 -> sql에서의 select
-3) arrange() : 정렬 -> order(), sort()
-4) mutate() : 열 추가
-5) summarize() : 통계량 산출
-6) groupby() : 집단별로 나누기
-7) left_join() : 데이터 합치기(열) -> cbind()
-8) bind_rows() : 데이터 합치기(행) -> rbind()
-
-
-
-
-* Data Preprocessing
-=====================================
-1. 순서
-  데이터 탐색 => 결측치 처리 => 이상치 처리 => Feature Engineering  
-  (Feature는 컬럼을 의미 = 종속변수에 영향을 주는 컬럼)
-
-2. 데이터 탐색
-  (1) 변수 확인
-  (2) 변수 유형(범주형, 연속형, 문자형, 숫자형, ..)
-  (3) 변수의 통계량
-  (4) 변수와의 관계, 평균차이 검증(마지막 분석단계에서도 사용)
+(1) 평균차이 검정
+  - 집단간의 평균 차이
+  - t-test, anova
+  - 데이터 유형 : 명목변수 -> 연속변수
   
-3. 결측치 처리
-  (1) 삭제
-  (2) 다른 값으로 대체
-  (3) 예측 : 선형 회귀분석, 로지스틱 회귀분석
   
-4. 이상치 처리
-  (1) 이상치 탐색
-      1) 시각적 확인 : 산포도, 상자도표
-      2) 통계적 확인 : 표준 편차, leverage, Cook's D
-  
-  (2) 처리 방법
-      1) 삭제
-      2) 다른 값으로 대체
-      3) 리샘플링
+  1) t-test (student t-test)
+    - 두 집단간의 평균 차이
+      a) 하나의 집단으로 검정 : one sample t-test
+      b) 두개의 집단으로 검정 : independent two sample t-test (default)
+      c) 하나의 집단을 시간의 차이로 두번 검정 : paired sample t-test
       
-5. Feature Engineering
-  (1) Scaling
-      1) 표준화(Standardization)
-      2) 정규화(Normalization)
-
-  (2) Binning : 연속형 변수를 범주형 변수로 변환
+      - 조건
+        a) 결과값이 연속변수
+            아닐 경우 : Mann-Whitney U test, Whilcoxen rank sum test, Mann-Whitney Wilcoxen test(MWW)
+        b) 정규 분포
+            아닐 경우 : Mann-Whitney Wilcoxen test(MWW)
+        c) 등분산
+            아닐 경우 : Welch's t-test
   
-  (3) Dummy : 범주형 변수를 연속형 변수로 변환
+  2) anova (ANalysis of VAriance)
+    - 세 집단 이상의 평균 차이
+      a) 집단이 3개 이상일 때 : One Way Anova (일원 배치 분산분석)
+        - independent two sample t-test 의 확장이라고 보면 된다.
+        
+      b) 시간에 따른 차이로 세번 이상 검정 : Repeated Measured Anova
+        - paired sample t-test 의 확장이라고 보면 된다.
+        
+      c) 요인에 따른 차이 검정 : Two Way Anova
+      
+      d) 시간 + 요인에 따른 차이 검정 : Two Way Repeated Measured Anova
+      
+    - 조건
+      a) 결과값이 연속변수
+        - 아닐 경우 : Kruskal-wallis H test
+      
+      b) 정규 분포
+        - 아닐 경우 : Kruskal-wallis H test
+      
+      c) 등분산
+        - Welch's anova
+        
+    - 사후 검정 (예를들어 집단이 3가지 이상이라하면 어떤것끼리 차이가 있는지를 확인시켜줘야하는 것)
+      a) Tukey : 정규분포, 등분산
+      b) DUNcan, Bonferroni, Fisher's LSD, ...
+
+
+*** 모수적인 통계방식과 비모수적인 통계방식
+  - 모수적인 방식 : 정규분포일 경우
+  - 비모수적인 방식 : 정규분포가 아닐 경우
+      A 20 21 21 22 124 = 208
+      B 40 41 42 43 42 = 208
+      
+      1  2.5 2.5  4   5   6   7.5 7.5 9   10     -  등수를 매긴다.
+      A   A   A   A   B   B   B   B   B   A
+      20  21  21  22  40  41  42  42  43  124
+      
+      A : 1 + 2.5 + 2.5 + 4 + 10 = 20 
+      B : 5 + 6 + 7.5 + 7.5 + 9 = 35
+      
+      위와같이 비모수적 방식은 데이터가 적을때 = 정규분포가 아닐때,  위같이 124 의 이상치가 들어오면
+      평균에 영향을 크게 미치게 된다. 그러므로 비모수적 방식을 채택.
+      정규분포일 경우 = 데이터가 많을때는 이상치가 들어와도 큰 영향을 미치지 않는다.
+      
+      
   
-  (4) Transform : 기존 존재하는 변수의 성질을 이용해 다른 변수를 만드는 방법 ...
-  
-  
   
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+(2) 관계 검정
+  - 변수와 변수의 관계를 검정
+  - 데이터 유형 : 연속변수 -> 연속변수, 질적변수 -> 질적변수
+  
+  1) 상관 분석(Correlation Test)
+    - 연속변수 -> 연속변수
+    - 1:1로 서로 동등한 입장에서 관계를 분석
+    - 상관 계수(r계수) : -1 ~ 1
+    - 측정 방식
+      a) 모수적인 방식 ( =정규분포 ) : 피어슨의 상관 계수
+      b) 비모수적인 방식 ( != 정규분포 ) : 스피어만의 상관 계수, 켄달의 tau
+    - 수학적인 관계를 판단
+    - 회귀분석 전 단계에서 사용
+    - 선형 함수
+    
+  2) 회귀 분석(Regression Test)
+    - 연속변수 -> 연속변수
+    - 인과 관계(여러 개의 독립(원인)변수와 한계의 종속(결과)변수)
+    - 독립변수의 갯수에 따라
+        a) 단일 회귀 분석 : 독립변수가 1개
+        b) 다중 회귀 분석 : 독립변수가 여러개
+    - 분포에 따라
+        a) 정규 분포 : 선형 회귀 분석 (lm())
+        b) 이항 분포 : 로지스틱 회귀 분석
+    - 조건
+        a) 연속 변수
+        b) 정규분포
+        c) 등분산
+        d) 독립성(다중공선성이 작아야 한다.)
+        
+  
+  3) 교차 분석(Chi Square Test)
+    - 질적변수 -> 질적변수
+    - 비율검정
+    - 조건
+      a) Chi Square Test : 데이터 수(기대도수)가 충분할 경우
+      b) Fisher's exact Test : 데이터수가 부족할 때
+      c) Cochran-Amitage Trend Test : 명목변수가 서열변수(Trend)
+    - 기준에 따라 차이검정일수도 있고 관계검정일수도 있다.
+      a) 일원 카이제곱(차이 검정)
+      b) 이원 카이제곱(관계 검정)
 
 
 
