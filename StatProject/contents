@@ -34,9 +34,31 @@
         c) 등분산
             아닐 경우 : Welch's t-test
   
-  2) anova
+  2) anova (ANalysis of VAriance)
     - 세 집단 이상의 평균 차이
-
+      a) 집단이 3개 이상일 때 : One Way Anova (일원 배치 분산분석)
+        - independent two sample t-test 의 확장이라고 보면 된다.
+        
+      b) 시간에 따른 차이로 세번 이상 검정 : Repeated Measured Anova
+        - paired sample t-test 의 확장이라고 보면 된다.
+        
+      c) 요인에 따른 차이 검정 : Two Way Anova
+      
+      d) 시간 + 요인에 따른 차이 검정 : Two Way Repeated Measured Anova
+      
+    - 조건
+      a) 결과값이 연속변수
+        - 아닐 경우 : Kruskal-wallis H test
+      
+      b) 정규 분포
+        - 아닐 경우 : Kruskal-wallis H test
+      
+      c) 등분산
+        - Welch's anova
+        
+    - 사후 검정 (예를들어 집단이 3가지 이상이라하면 어떤것끼리 차이가 있는지를 확인시켜줘야하는 것)
+      a) Tukey : 정규분포, 등분산
+      b) DUNcan, Bonferroni, Fisher's LSD, ...
 
 
 *** 모수적인 통계방식과 비모수적인 통계방식
@@ -61,3 +83,33 @@
   
 
 (2) 관계 검정
+  - 변수와 변수의 관계를 검정
+  - 데이터 유형 : 연속변수 -> 연속변수, 질적변수 -> 질적변수
+  
+  1) 상관 분석(Correlation Test)
+    - 연속변수 -> 연속변수
+    - 1:1로 서로 동등한 입장에서 관계를 분석
+    - 상관 계수(r계수) : -1 ~ 1
+    - 측정 방식
+      a) 모수적인 방식 ( =정규분포 ) : 피어슨의 상관 계수
+      b) 비모수적인 방식 ( != 정규분포 ) : 스피어만의 상관 계수, 켄달의 tau
+    - 수학적인 관계를 판단
+    - 회귀분석 전 단계에서 사용
+    - 선형 함수
+    
+  2) 회귀 분석(Regression Test)
+  
+  3) 교차 분석(Chi Square Test)
+    - 질적변수 -> 질적변수
+    - 비율검정
+    - 조건
+      a) Chi Square Test : 데이터 수(기대도수)가 충분할 경우
+      b) Fisher's exact Test : 데이터수가 부족할 때
+      c) Cochran-Amitage Trend Test : 명목변수가 서열변수(Trend)
+    - 기준에 따라 차이검정일수도 있고 관계검정일수도 있다.
+      a) 일원 카이제곱(차이 검정)
+      b) 이원 카이제곱(관계 검정)
+
+
+
+

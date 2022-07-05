@@ -205,8 +205,15 @@ telco <- read.csv("../data/Telco-Customer-Churn.csv")
 View(telco)
 
 out0 <- aov(TotalCharges ~ PaymentMethod + Contract + PaymentMethod:Contract, data=telco)
-shapiro.test(resid(out0))
+summary(out0)
 
+result <- TukeyHSD(out0)
+plot(result)
+
+ggplot(data=telco, aes(PaymentMethod, TotalCharges, col=Contract)) + geom_boxplot()
+# 그래프결과 : 지불방식과는 상관없이 2년마다 계약하는 방법이 가장 많은 돈을 내고 있다.
+# Mailed check 방식은 contract 계약기간마다 큰 변화가 없으나 나머지 방식들은 계약기간마다 금액차이가 난다.
+# 텔레마케터 영업하는 입장에서는 고객들에게 2년마다 계약하는 방식으로 영업을 하도록 유도하는 것이 좋겠다.
 
 
 ####################################################################################################################
@@ -239,24 +246,6 @@ means
 plot(means, type="o", lty=2, col="red")
 
 
-### 사후 검정
-library(reshape2)
-rmlong <- melt(df, id.vars="id")
-rmlong
-
-pairwise.t.test(rmlong$value, rmlong$variable, paired = T, p.adjust.method = "bonferroni")
-
-
-##### 실습1 #####
-### 주제 : 7명의 학생이 총 4번의 시험을 보았다. 평균 차이가 있는가 ?
-### 있다면 어디에서 차이가 있는가 ?
-mydata <- read.csv("../data/onewaysample.csv")
-View(mydata)
-
-
-
-
-
 # 또는
 out <- aov(value ~ variable, data=rmlong)
 shapiro.test(resid(out))
@@ -277,6 +266,64 @@ trials
 ?Anova
 model1 <- Anova(multimodel, idata=data.frame(trials), idesign=~trials, type="III")
 summary(model1, multivariate=F)
+
+
+
+### 사후 검정
+library(reshape2)
+rmlong <- melt(df, id.vars="id")
+rmlong
+
+pairwise.t.test(rmlong$value, rmlong$variable, paired = T, p.adjust.method = "bonferroni")
+
+
+##### 실습1 #####
+### 주제 : 7명의 학생이 총 4번의 시험을 보았다. 평균 차이가 있는가 ?
+### 있다면 어디에서 차이가 있는가 ?
+mydata <- read.csv("../data/onewaysample.csv")
+mydata
+
+# x - index 삭제하고 다시 정렬
+mydata <- mydata[ ,2:6]
+mydata
+
+means <- c(mean(mydata$score0), mean(mydata$score1), mean(mydata$score3), mean(mydata$score6))
+means
+
+plot(means, type="o", lty=2, col="red")
+
+# 선형모델 만들기
+multimodel <- lm(cbind(mydata$score0, mydata$score1, mydata$score3, mydata$score6) ~ 1)
+multimodel
+
+trials <- factor(c("score0", "score1", "score3", "score6"))
+trials
+
+model1 <- Anova(multimodel, idata=data.frame(trials), idesign=~trials, type="III")
+summary(model1, multivariate=F)   #  Pr(>F) 가 1.473e-14 *** 로 차이가 있다.
+
+### 사후 검정
+library(tidyr)
+
+
+rmlong <- gather(mydata, key="ID", value="score")
+rmlong <- rmlong[8:35, ]
+rmlong
+
+pairwise.t.test(rmlong$score, rmlong$ID, paired = T, p.adjust.method = "bonferroni")
+
+# 313 코드 실행 후 결과
+#        score0  score1  score3 
+# score1 0.00085 -       -      
+# score3 5.9e-06 0.00031 -      
+# score6 4.8e-06 5.0e-05 0.00038
+
+# 각 스코어끼리 차이가 있다. 0.05보다 작다.
+
+
+
+
+
 
 
 
