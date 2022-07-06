@@ -128,3 +128,104 @@ plot(house$sqft_living, house$price)     # 양의 상관관계
 
 # 예를 들어 거실이 770 일시 집 값을 절편과 기울기를 통해 구해볼 수 있음
 770 * 280 - 43580.743     # 거실 평수 * 절편 + 기울기 = 집값  ( 집 값은 172019.3 )
+
+
+
+
+##### 다중 회귀 분석 #####
+### y = a1*x1 + a2*x2 + ... + b
+
+
+##### 실습1 #####
+# 종속 변수 : price
+# 독립 변수 : sqft_living, foors, waterfront
+
+house <- read.csv("../data/kc_house_data.csv")
+str(house)
+
+fit1 <- lm(price ~ sqft_living + floors + waterfront, data=house)
+summary(fit1)
+
+# 변수들간의 상관 관계
+x <- cbind(house$sqft_living, house$floors, house$waterfront)
+cor(x)
+
+# 독립 변수 : sqft_living, bathrooms, sqft_lot, floors
+x <- cbind(house$sqft_living, house$floors, house$bathrooms, house$sqft_lot)
+cor(x)
+
+# 회귀 분석
+fit1 <- lm(price ~ sqft_living, data=house)
+summary(fit1)   # Multiple R-squared:  0.4929
+
+fit2 <- lm(price ~ sqft_living + floors, data=house)
+summary(fit2)   # 공통점이 많은 변수를 추가했으므로 설명력 변화가 없다. Multiple R-squared:  0.4929
+
+# 조절 변수 추가
+fit3 <- lm(price ~ sqft_living + floors + sqft_living*floors, data=house)
+summary(fit3)  # 층이 올라갈수록 가격이 싸진다는 이상한 값이 나옴 (-1.164e+05) 다중공선성 문제때문
+
+#install.packages("car")
+library(car)
+
+vif(fit3)
+
+
+
+##### 실습2 #####
+View(state.x77)
+
+states <- as.data.frame(state.x77[, c("Murder", "Population", "Illiteracy", "Income", "Frost")])
+states
+
+fit1 <- lm(Murder ~ Population + Illiteracy + Income + Frost, data=states)
+summary(fit1)   # 살인사건과 가장 연관된 것 Illiteracy(2.19e-05 ***) , 두번째는 Population(0.0173 *)
+
+# 다중 공선선 - 2보다 큰 것 ( 2를 넘는 것이 없으므로 다중공선성에는 문제가 없다 = 공통적인 부분은 없다.)
+sqrt(vif(fit1))
+
+### 이상 관측치
+# 1) 이상치(outlier) : 표준편차보다 2배 이상 크거나 작은 값
+# 2) 큰 지레점(High leverage points) : p(절편을 포함한 인수들의 갯수)/n 의 값이 2~3배 이상되는 관측치 : 5/50 = 0.1
+# 3) 영향 관측치(Influential Observation, Cook's D)
+#    독립변수의 수/(샘플의 수 - 예측 인자의 수 -1)의 값보다 클 경우
+#    4 / (50 - 4 - 1) = 0.1
+
+par(mfrow=c(1, 1))
+influencePlot(fit1, id=list(method="identify"))
+
+### 회귀 모델의 교정
+summary(fit1)
+
+par(mfrow=c(2, 2))
+plot(fit1)
+
+shapiro.test(resid(fit1))
+
+# 정규성을 만족하지 않을 때 (결과변수에 람다 승을 해준다.)
+powerTransform(states$Murder)
+# -2(1/y^2), -1(1/y), -0.5(1/sqrt(y)), 0(log(y)), 0.5(sqrt(y)), 1, 2(y^2)
+
+
+summary(powerTransform(states$Murder))
+
+### 선형성을 만족하지 않을 때
+boxTidwell(Murder ~ Population + Illiteracy, data=states)
+# Pr(>|z|) 값을 살펴보면 Population = 0.7468 , Illiteracy = 0.5357 로 관계 없다. 왜냐 여기선 선형성을 만족하므로
+# 만약 선형성을 만족하지 않는다면  MLE of lambda Score 를 곱해보라는 말.
+
+
+### 등분산성을 만족하지 않을 때
+ncvTest(fit1)   # p = 0.18632 로 등분산성을 만족한다는 뜻
+
+spreadLevelPlot(fit1)   # 만약 등분산성이 만족하지 않다면 종속변수에 1.209626  즉, 1.2배를 해보라는 뜻
+
+
+##### 회귀모델의 선택 #####
+### 측정값 : AIC (Akaike's Information Criterion) : 이 값이 작을 수록 좋다.
+### 모델 선택 방법
+###   1) Backward Stepwise Regression
+###       - 모든 독립변수를 대상으로 해서 하나씩 빼는 방법
+###   2) Forward Stepwise Regression
+###       - 변수를 하나씩 추가하면서 AIC값을 측정
+
